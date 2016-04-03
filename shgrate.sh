@@ -158,9 +158,20 @@ sg_migrate()
         sg_err "Can not create directory $SG_MIGRATED_DIR/${SG_ENVIRONMENT}."
     }
 
+    SG_COUNTER=0
     for file in $( sg_compare_dir )
     do
+        SG_COUNTER=$(( $SG_COUNTER + 1 ))
+
         echo -n "Migrating $file..."
+        if [ "$SG_DRY_RUN" == "true" ]; then
+            echo "done."
+            echo ">> Contents of file $SG_MIGRATION_DIR/${file}: "
+            cat "$SG_MIGRATION_DIR/$file" && echo ""
+
+            continue
+        fi
+
         SG_IMPORT_ERROR="$( mysql --defaults-file=$SG_MYSQL_CONFIG_FILE $SG_DB_NAME < $SG_MIGRATION_DIR/$file 2>&1 >/dev/null )"
 
         if [ $? -eq 0 ]; then
@@ -174,6 +185,8 @@ sg_migrate()
             exit 3
         fi
     done
+
+    [ $SG_COUNTER -eq 0 ] && echo "Nothing to migrate."
 }
 
 # Function to rollback the schema which already migrated
@@ -181,9 +194,20 @@ sg_rollback()
 {
     sg_init_migrate
 
+    SG_COUNTER=0
     for file in $( ls $SG_MIGRATED_DIR/$SG_ENVIRONMENT | sort -r | head -1 )
     do
+        SG_COUNTER=$(( $SG_COUNTER + 1 ))
         echo -n "Rollback ${file}..."
+
+        if [ "$SG_DRY_RUN" == "true" ]; then
+            # Dummy statement
+            echo "done."
+            echo ">> Contents of file $SG_MIGRATED_DIR/$SG_ENVIRONMENT/${file}: "
+            cat "$SG_MIGRATED_DIR/$SG_ENVIRONMENT/$file" && echo ""
+
+            continue
+        fi
 
         SG_ROLLBACK_ERROR="$( mysql --defaults-file=$SG_MYSQL_CONFIG_FILE $SG_DB_NAME < $SG_MIGRATED_DIR/$SG_ENVIRONMENT/$file 2>&1 >/dev/null )"
 
@@ -198,6 +222,8 @@ sg_rollback()
             exit 3
         fi
     done
+
+    [ $SG_COUNTER -eq 0 ] && echo "Nothing to migrate."
 }
 
 # Parse the arguments
@@ -224,14 +250,14 @@ do
         ;;
 
         r)
-            echo "Dry run mode"
+            sg_log "Running in DRY RUN mode"
             SG_DRY_RUN="true"
             SG_DO_MIGRATION="true"
         ;;
 
         v)
             echo "shgrate version ${SG_VERSION}."
-            exit 1
+            exit 0
         ;;
 
         \?)
