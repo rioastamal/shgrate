@@ -201,7 +201,7 @@ sg_rollback()
 }
 
 # Parse the arguments
-while getopts bhm:rv SG_OPT;
+while getopts be:hm:rv SG_OPT;
 do
     case $SG_OPT in
         b)
@@ -211,6 +211,7 @@ do
 
         e)
             SG_ENVIRONMENT="$OPTARG"
+            SG_DO_MIGRATION="true"
         ;;
 
         h)
@@ -225,6 +226,7 @@ do
         r)
             echo "Dry run mode"
             SG_DRY_RUN="true"
+            SG_DO_MIGRATION="true"
         ;;
 
         v)
