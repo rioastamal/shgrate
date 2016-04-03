@@ -201,7 +201,6 @@ sg_rollback()
         echo -n "Rollback ${file}..."
 
         if [ "$SG_DRY_RUN" == "true" ]; then
-            # Dummy statement
             echo "done."
             echo ">> Contents of file $SG_MIGRATED_DIR/$SG_ENVIRONMENT/${file}: "
             cat "$SG_MIGRATED_DIR/$SG_ENVIRONMENT/$file" && echo ""
