@@ -6,6 +6,11 @@ say you're building an application using a framework but this framework does
 not provide you the schema migration - then you can use shgrate to 'version
 control' your database.
 
+Most of the migration tools save the migrated actions into the database itself.
+shgrate takes difference approach where all the migrated script is saved in
+a directory so all the migrated script can be easily viewed without having
+to connect to the database.
+
 # Author
 
 shgrate is written by Rio Astamal <me@rioastamal.net>
