@@ -15,13 +15,13 @@ SG_ROLLBACK_MODE="false"
 SG_MIGRATE_SUFFIX="sg_migrate.sql"
 
 # Flag for debugging
-[ -z "${SG_DEBUG}" ] && SG_DEBUG="false"
+[ -z "$SG_DEBUG" ] && SG_DEBUG="false"
 
 # Function to show the help message
 sg_help()
 {
     echo "\
-Usage: $0 [OPTIONS]
+Usage: $0 [OPTIONS] -s DBNAME
 
 Where OPTIONS:
   -b            rollback mode
@@ -49,7 +49,7 @@ shift $((OPTIND-1))
 # Function to log message
 sg_log()
 {
-    [ "${SG_DEBUG}" = "true" ] && echo "DEBUG: $@"
+    [ "$SG_DEBUG" = "true" ] && echo "DEBUG: $@"
     logger -p user.notice -t $SCRIPT_NAME "$@"
 }
 
@@ -66,10 +66,10 @@ sg_compare_dir()
     # Only in tools/migrated/env_name: file_x.sql
     # Only in tools/migrations: file_y.sql
     # ```
-    # We are only interest the output which says only in tools/migraitons
+    # We are only interest the output which says 'only in MIGRATED_DIR/ENV_NAME'
     # because it means that these files is not migrated yet.
-    SG_ENV_MIGRATED_DIR="${SG_MIGRATED_DIR}/${SG_ENVIRONMENT}"
-    diff -q "${SG_ENV_MIGRATED_DIR}/" "${SG_MIGRATION_DIR}" | grep "^Only in $SG_ENV_MIGRATION_DIR" | \
+    SG_ENV_MIGRATED_DIR="$SG_MIGRATED_DIR/$SG_ENVIRONMENT"
+    diff -q "$SG_ENV_MIGRATED_DIR" "$SG_MIGRATION_DIR" | grep "^Only in $SG_ENV_MIGRATION_DIR" | \
     awk -F': ' '{print $2}' | sort
 }
 
@@ -80,6 +80,7 @@ sg_init_migrate()
         sg_err "Please specify the database name in SG_DB_NAME environment or in config."
         exit 2
     }
+    sg_log "Using database name ${SG_DB_NAME}."
 
     [ -z "$SG_CHECK_MYSQL_CONFIG_FILE" ] && SG_CHECK_MYSQL_CONFIG_FILE="false"
 
@@ -92,6 +93,7 @@ sg_init_migrate()
             exit 2
         }
     fi
+    sg_log "Using MySQL client config file ${SG_MYSQL_CONFIG_FILE}."
 
     # Directory used to store the SQL schema migration
     [ -z "$SG_MIGRATION_DIR" ] && SG_MIGRATION_DIR="migrations"
@@ -100,6 +102,7 @@ sg_init_migrate()
         sg_err "Failed to find the migrations: $SG_MIGRATION_DIR directory."
         exit 2
     }
+    sg_log "Migration directory is set to ${SG_MIGRATION_DIR}."
 
     [ -z "$SG_MIGRATED_DIR" ] && SG_MIGRATED_DIR="migrated"
 
@@ -107,6 +110,7 @@ sg_init_migrate()
         sg_err "Failed to find the migrated: $SG_MIGRATED_DIR directory."
         exit 2
     }
+    sg_log "Migrated directory is set to ${SG_MIGRATED_DIR}"
 
     [ -z "$SG_ROLLBACK_DIR" ] && SG_ROLLBACK_DIR="rollback"
 
@@ -114,6 +118,7 @@ sg_init_migrate()
         sg_err "Failed to find the rollback: $SG_ROLLBACK_DIR directory."
         exit 2
     }
+    sg_log "Rollback directory is set to ${SG_ROLLBACK_DIR}."
 }
 
 # Function to create the SQL migration file
@@ -133,7 +138,7 @@ function sg_create_migration_file()
 -- Date: $SG_DATE_RFC2822
 -- Write your SQL migration below this line" > "$SG_MIGRATION_DIR/$SG_FILE_NAME" || {
         sg_err "Failed to create file $SG_MIGRATION_DIR/${SG_FILE_NAME}."
-        exit 2
+        exit 2mysql --defaults-file=$SG_MYSQL_CONFIG_FILE $SG_DB_NAME < $SG_MIGRATION_DIR/$file 2>&1 >/dev/null
     }
 
     echo "\
@@ -142,9 +147,12 @@ function sg_create_migration_file()
 -- File: $SG_FILE_NAME
 -- Date: $SG_DATE_RFC2822
 -- Write your SQL rolllback migration below this line" > "$SG_ROLLBACK_DIR/$SG_FILE_NAME" || {
-        sg_err "Failed to create file $SG_ROLLBACK_DIR/${SG_FILE_NAM}E."
+        sg_err "Failed to create file $SG_ROLLBACK_DIR/${SG_FILE_NAME}."
         exit 2
     }
+
+    echo "Migration file: $SG_MIGRATION_DIR/${SG_FILE_NAME}."
+    echo "Rollback file: $SG_ROLLBACK_DIR/${SG_FILE_NAME}."
 }
 
 # Function to migrate the schema by executing all the files in migrations
@@ -154,6 +162,7 @@ sg_migrate()
     sg_init_migrate
 
     # Create the environment directory inside the migrated dir
+    sg_log "Creating directory $SG_MIGRATED_DIR/$SG_ENVIRONMENT if not exists."
     mkdir -p "$SG_MIGRATED_DIR/$SG_ENVIRONMENT" 2>/dev/null || {
         sg_err "Can not create directory $SG_MIGRATED_DIR/${SG_ENVIRONMENT}."
     }
@@ -172,6 +181,7 @@ sg_migrate()
             continue
         fi
 
+        sg_log "Running command: mysql --defaults-file=$SG_MYSQL_CONFIG_FILE $SG_DB_NAME < $SG_MIGRATION_DIR/$file 2>&1 >/dev/null"
         SG_IMPORT_ERROR="$( mysql --defaults-file=$SG_MYSQL_CONFIG_FILE $SG_DB_NAME < $SG_MIGRATION_DIR/$file 2>&1 >/dev/null )"
 
         if [ $? -eq 0 ]; then
@@ -194,8 +204,9 @@ sg_rollback()
 {
     sg_init_migrate
 
+    sg_log "Getting list of rollback files in $SG_MIGRATED_DIR/$SG_ENVIRONMENT directory."
     SG_COUNTER=0
-    for file in $( ls $SG_MIGRATED_DIR/$SG_ENVIRONMENT | sort -r | head -1 )
+    for file in $( ls $SG_MIGRATED_DIR/$SG_ENVIRONMENT 2>/dev/null | sort -r | head -1 )
     do
         SG_COUNTER=$(( $SG_COUNTER + 1 ))
         echo -n "Rollback ${file}..."
@@ -208,6 +219,7 @@ sg_rollback()
             continue
         fi
 
+        sg_log "Running command: mysql --defaults-file=$SG_MYSQL_CONFIG_FILE $SG_DB_NAME < $SG_MIGRATED_DIR/$SG_ENVIRONMENT/$file 2>&1 >/dev/null"
         SG_ROLLBACK_ERROR="$( mysql --defaults-file=$SG_MYSQL_CONFIG_FILE $SG_DB_NAME < $SG_MIGRATED_DIR/$SG_ENVIRONMENT/$file 2>&1 >/dev/null )"
 
         if [ $? -eq 0 ]; then
@@ -222,7 +234,7 @@ sg_rollback()
         fi
     done
 
-    [ $SG_COUNTER -eq 0 ] && echo "Nothing to migrate."
+    [ $SG_COUNTER -eq 0 ] && echo "Nothing to rollback."
 }
 
 # Parse the arguments
