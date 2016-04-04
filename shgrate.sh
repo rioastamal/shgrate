@@ -24,6 +24,7 @@ sg_help()
 Usage: $0 [OPTIONS] -s DBNAME
 
 Where OPTIONS:
+  -a NAME       use database NAME
   -b            rollback mode
   -c FILE       read the config file from the FILE
   -e ENVIRON    specify environment name by ENVIRON. Default is 'production'
@@ -238,9 +239,14 @@ sg_rollback()
 }
 
 # Parse the arguments
-while getopts be:hm:rv SG_OPT;
+while getopts a:be:hm:rv SG_OPT;
 do
     case $SG_OPT in
+        a)
+            SG_DB_NAME="$OPTARG"
+            SG_DO_MIGRATION="true"
+        ;;
+
         b)
             SG_ROLLBACK_MODE="true"
             SG_DO_MIGRATION="true"
