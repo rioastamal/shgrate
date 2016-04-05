@@ -63,7 +63,7 @@ Where OPTIONS:
   -m NAME       create a migration file named NAME
   -r            dry run
   -v            print the shgrate version
-ss
+
 shgrate is a simple database schema migration for MySQL written in Bash.
 shgrate is free software licensed under MIT. Visit the project homepage
 at http://github.com/astasoft/shgrate
