@@ -105,7 +105,7 @@ Migration file: migrations/2016_04_05_21_06_20_create_table_user.sg_migrate.sql.
 Rollback file: rollback/2016_04_05_21_06_20_create_table_user.sg_migrate.sql.
 ```
 
-Below is a sample of the content of migration and rollback file we just created. You can edit it the file using your favorite text editor. On the example below I put simple statement to create table called "user".
+Below is a sample of the content of migration and rollback file we just created. You can edit the files using your favorite text editor. On the example below I put simple statement to create table called "user".
 
 ```
 $ cat migrations/2016_04_05_21_06_20_create_table_user.sg_migrate.sql
