@@ -19,6 +19,8 @@ migrations | Used to store the SQL migration scripts
 migrated | Used to store actions which has been migrated
 rollback | Used to store the SQL rollback scripts
 
+Keep it mind that these directories are configurable via environment variable or config file.
+
 ## Requirements
 
 shgrate require Bash (tested with Bash 4.3.11), MySQL client binary and other shell core utilities:
@@ -43,8 +45,6 @@ $ git clone github.com/astasoft/shgrate
 ```
 
 Another altertive is download the zip tarball and extract it somewhere on your box.
-
-shgrate needs 
 
 ## Author
 
