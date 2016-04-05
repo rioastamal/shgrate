@@ -21,7 +21,7 @@ SG_MIGRATE_SUFFIX="sg_migrate.sql"
 sg_help()
 {
     echo "\
-Usage: $0 [OPTIONS] -s DBNAME
+Usage: $0 [OPTIONS]
 
 Where OPTIONS:
   -a NAME       use database NAME
@@ -70,12 +70,12 @@ sg_compare_dir()
     # We are only interest the output which says 'only in MIGRATED_DIR/ENV_NAME'
     # because it means that these files is not migrated yet.
     SG_ENV_MIGRATED_DIR="$SG_MIGRATED_DIR/$SG_ENVIRONMENT"
-    diff -q "$SG_ENV_MIGRATED_DIR" "$SG_MIGRATION_DIR" | grep "^Only in $SG_ENV_MIGRATION_DIR" | \
+    diff -q "$SG_ENV_MIGRATED_DIR" "$SG_MIGRATION_DIR" | grep "^Only in $SG_MIGRATION_DIR" | \
     awk -F': ' '{print $2}' | sort
 }
 
-# Function to initialize common config
-sg_init_migrate()
+# Function to initialize mysql config
+sg_init_mysql_config()
 {
     [ -z "$SG_DB_NAME" ] && {
         sg_err "Please specify the database name in SG_DB_NAME environment or in config."
@@ -95,7 +95,11 @@ sg_init_migrate()
         }
     fi
     sg_log "Using MySQL client config file ${SG_MYSQL_CONFIG_FILE}."
+}
 
+# Function to initialize common config
+sg_init_migrate()
+{
     # Directory used to store the SQL schema migration
     [ -z "$SG_MIGRATION_DIR" ] && SG_MIGRATION_DIR="migrations"
 
@@ -160,6 +164,7 @@ function sg_create_migration_file()
 # directory which does not exists on migrated directory
 sg_migrate()
 {
+    sg_init_mysql_config
     sg_init_migrate
 
     # Create the environment directory inside the migrated dir
@@ -203,6 +208,7 @@ sg_migrate()
 # Function to rollback the schema which already migrated
 sg_rollback()
 {
+    sg_init_mysql_config
     sg_init_migrate
 
     sg_log "Getting list of rollback files in $SG_MIGRATED_DIR/$SG_ENVIRONMENT directory."
