@@ -41,7 +41,7 @@ compatible OS such as Mac OS X - even Windows using cygwin.
 Clone the project repository via github:
 
 ```
-$ git clone github.com/astasoft/shgrate
+$ git clone git@github.com/astasoft/shgrate
 ```
 
 Another altertive is download the zip tarball and extract it somewhere on your box.
