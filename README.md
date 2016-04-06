@@ -51,7 +51,7 @@ Another altertive is download the zip tarball and extract it somewhere on your b
 Running shgrate with `-h` option will give you list of option that shgrate supports.
 
 ```
-$ ./shgrate.sh
+$ ./shgrate.sh -h
 Usage: ./shgrate.sh [OPTIONS]
 
 Where OPTIONS:
