@@ -53,6 +53,12 @@ getopts 'c:' SG_OPT "@$"
 }
 shift $((OPTIND-1))
 
+# Function to display message to inform user to see the help
+sg_see_help()
+{
+    echo "Try '$SG_SCRIPT_NAME -h' for more information."
+}
+
 # Function to output syslog like output
 sg_write_log()
 {
@@ -80,6 +86,7 @@ sg_log()
 sg_err() {
     echo "ERROR: $@" >&2
     sg_write_log "$@"
+    sg_see_help
 }
 
 # Function to compare files between migrated v migration directory
@@ -101,7 +108,7 @@ sg_compare_dir()
 sg_init_mysql_config()
 {
     [ -z "$SG_DB_NAME" ] && {
-        sg_err "Please specify the database name in SG_DB_NAME environment or in config."
+        sg_err "Please specify the database name in -a option, SG_DB_NAME environment or in config."
         exit 2
     }
     sg_log "Using database name ${SG_DB_NAME}."
