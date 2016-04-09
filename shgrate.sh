@@ -37,7 +37,7 @@ Where OPTIONS:
   -e ENVIRON    specify environment name by ENVIRON. Default is 'production'
   -h            print this help and exit
   -m NAME       create a migration file named NAME
-  -o FILE       save the log to the FILE
+  -o FILE       save log output to the FILE
   -r            dry run
   -v            print the shgrate version
 
@@ -55,7 +55,7 @@ sg_see_help()
 # Try to read from the config file if specified
 # We can not use sg_log and sg_err because we still does not know
 # the log file
-getopts 'c:' SG_CONFIG_OPT
+getopts ':c:' SG_CONFIG_OPT
 case $SG_CONFIG_OPT in
     c)
         [ "$SG_DEBUG" = "true" ] && echo "DEBUG: Using config file ${OPTARG}."
@@ -68,8 +68,7 @@ case $SG_CONFIG_OPT in
     ;;
 
     \?)
-        echo "Unknown option" >&2
-        exit 1
+        # Do nothing
     ;;
 esac
 
