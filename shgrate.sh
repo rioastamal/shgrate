@@ -5,17 +5,22 @@
 # @see README.md
 
 # Script name used for logger
-readonly SCRIPT_NAME=$(basename $0)
+readonly SG_SCRIPT_NAME=$(basename $0)
 
 SG_VERSION=1.0
 SG_CONFIG_FILE=""
 SG_ENVIRONMENT="production"
 SG_DRY_RUN="false"
 SG_ROLLBACK_MODE="false"
-SG_MIGRATE_SUFFIX="sg_migrate.sql"
 
 # Flag for debugging
 [ -z "$SG_DEBUG" ] && SG_DEBUG="false"
+
+# Migration file suffix
+[ -z "$SG_MIGRATE_SUFFIX" ] && SG_MIGRATE_SUFFIX="sg_migrate.sql"
+
+# Default log file
+[ -z "$SG_LOG_FILE" ] && SG_LOG_FILE="shgrate.log"
 
 # Function to show the help message
 sg_help()
@@ -30,6 +35,7 @@ Where OPTIONS:
   -e ENVIRON    specify environment name by ENVIRON. Default is 'production'
   -h            print this help and exit
   -m NAME       create a migration file named NAME
+  -o FILE       save the log to the FILE
   -r            dry run
   -v            print the shgrate version
 
@@ -47,16 +53,33 @@ getopts 'c:' SG_OPT "@$"
 }
 shift $((OPTIND-1))
 
+# Function to output syslog like output
+sg_write_log()
+{
+    SG_LOG_MESSAGE="$@"
+    SG_SYSLOG_DATE_STYLE=$( date +"%b %e %H:%M:%S" )
+    SG_HOSTNAME=$( hostname )
+    SG_PID=$$
+
+    # Date Hostname AppName[PID]: MESSAGE
+    printf "%s %s %s[%s]: %s\n" \
+        "$SG_SYSLOG_DATE_STYLE" \
+        "$SG_HOSTNAME" \
+        "$SG_SCRIPT_NAME" \
+        "$SG_PID" \
+        "${SG_LOG_MESSAGE}">> "$SG_LOG_FILE"
+}
+
 # Function to log message
 sg_log()
 {
     [ "$SG_DEBUG" = "true" ] && echo "DEBUG: $@"
-    logger -p user.notice -t $SCRIPT_NAME "$@"
+    sg_write_log "$@"
 }
 
 sg_err() {
     echo "ERROR: $@" >&2
-    logger -p user.error -t $SCRIPT_NAME "$@"
+    sg_write_log "$@"
 }
 
 # Function to compare files between migrated v migration directory
@@ -264,6 +287,10 @@ do
 
         m)
             sg_create_migration_file "$OPTARG"
+        ;;
+
+        o)
+            SG_LOG_FILE="$OPTARG"
         ;;
 
         r)
