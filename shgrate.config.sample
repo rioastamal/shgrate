@@ -1,0 +1,27 @@
+# shgrate sample configuration file
+# ---------------------------------
+
+# Suffix migration for the shgrate
+SG_MIGRATE_SUFFIX="sg_migrate.sql"
+
+# Path to the log file
+SG_LOG_FILE="shgrate.log"
+
+# Environment for production e.g: 'production', 'development', 'testing'
+SG_ENVIRONMENT="production"
+
+# Name of the database
+SG_DB_NAME=""
+
+# MySQL client configuration file
+# Path to your main or custom ~/.my.cnf
+SG_MYSQL_CONFIG_FILE="~/.my.cnf"
+
+# Migration directory
+SG_MIGRATION_DIR="migrations"
+
+# Migrated directory
+SG_MIGRATED_DIR="migrated"
+
+# Rollback directory
+SG_ROLLBACK_DIR="rollback"

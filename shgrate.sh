@@ -9,7 +9,6 @@ readonly SG_SCRIPT_NAME=$(basename $0)
 
 SG_VERSION=1.0
 SG_CONFIG_FILE=""
-SG_ENVIRONMENT="production"
 SG_DRY_RUN="false"
 SG_ROLLBACK_MODE="false"
 
@@ -21,6 +20,9 @@ SG_ROLLBACK_MODE="false"
 
 # Default log file
 [ -z "$SG_LOG_FILE" ] && SG_LOG_FILE="shgrate.log"
+
+# Environment
+[ -z "$SG_ENVIRONMENT" ] && SG_ENVIRONMENT="production"
 
 # Function to show the help message
 sg_help()
@@ -44,20 +46,35 @@ shgrate is free software licensed under MIT. Visit the project homepage
 at http://github.com/astasoft/shgrate."
 }
 
-# Try to read from the config file if specified
-getopts 'c:' SG_OPT "@$"
-[ "$SG_OPT" == "c" ] && {
-    [ -f "${OPTARG}" ] && {
-        source "${OPTARG}"
-    }
-}
-shift $((OPTIND-1))
-
 # Function to display message to inform user to see the help
 sg_see_help()
 {
     echo "Try '$SG_SCRIPT_NAME -h' for more information."
 }
+
+# Try to read from the config file if specified
+# We can not use sg_log and sg_err because we still does not know
+# the log file
+getopts 'c:' SG_CONFIG_OPT
+case $SG_CONFIG_OPT in
+    c)
+        [ "$SG_DEBUG" = "true" ] && echo "DEBUG: Using config file ${OPTARG}."
+        [ -f "$OPTARG" ] || {
+            echo "ERROR: Config file $OPTARG is not found." >&2
+            exit 2
+        }
+
+        source "$OPTARG"
+    ;;
+
+    \?)
+        echo "Unknown option" >&2
+        exit 1
+    ;;
+esac
+
+# We want another getopts to parse arguments so we reset OPTIND
+OPTIND=1
 
 # Function to output syslog like output
 sg_write_log()
@@ -275,7 +292,7 @@ sg_rollback()
 }
 
 # Parse the arguments
-while getopts a:be:hm:rv SG_OPT;
+while getopts c:a:be:hm:rv SG_OPT;
 do
     case $SG_OPT in
         a)
@@ -300,10 +317,6 @@ do
 
         m)
             sg_create_migration_file "$OPTARG"
-        ;;
-
-        o)
-            SG_LOG_FILE="$OPTARG"
         ;;
 
         r)
