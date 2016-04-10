@@ -7,7 +7,7 @@
 # Script name used for logger
 readonly SG_SCRIPT_NAME=$(basename $0)
 
-SG_VERSION=1.0
+SG_VERSION=1.1
 SG_CONFIG_FILE=""
 SG_DRY_RUN="false"
 SG_ROLLBACK_MODE="false"
